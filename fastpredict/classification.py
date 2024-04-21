@@ -37,7 +37,8 @@ class Settings:
                     ('lr', sklearn.linear_model.LogisticRegression(multi_class='multinomial')),
                     ('rf', sklearn.ensemble.RandomForestClassifier(n_estimators=50)),
                     ('gnb',sklearn.naive_bayes.GaussianNB())
-                ],'voting':'hard'},}
+                ],'voting':'hard'},
+                'AdaBoostClassifier':{'algorithm':'SAMME'}}
     def get_arguments(self):
         """Return used model arguments.
 
