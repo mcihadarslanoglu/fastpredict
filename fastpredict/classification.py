@@ -26,19 +26,20 @@ class Settings:
 
         self.arguments = {'ClassifierChain': {'base_estimator':sklearn.linear_model.LogisticRegression(solver = 'lbfgs'),},
                     'MultiOutputClassifier': {'estimator':sklearn.linear_model.LogisticRegression(solver = 'lbfgs'),},
-                    'OneVsOneClassifier': {'estimator':sklearn.svm.LinearSVC(dual="auto"),},
+                    'OneVsOneClassifier': {'estimator':sklearn.svm.LinearSVC(dual='auto'),},
                     'OneVsRestClassifier': {'estimator':sklearn.svm.SVC(),},
                     'OutputCodeClassifier': {'estimator':sklearn.ensemble.RandomForestClassifier(),},
                     'StackingClassifier': {'estimators':[('rf', sklearn.ensemble.RandomForestClassifier(n_estimators=10)),
                                                         ('svr', sklearn.pipeline.make_pipeline(sklearn.preprocessing.StandardScaler(),
-                                                                                               sklearn.svm.LinearSVC(dual="auto")))
+                                                                                               sklearn.svm.LinearSVC(dual='auto')))
                                                     ],},
                     'VotingClassifier': {'estimators':[
                     ('lr', sklearn.linear_model.LogisticRegression(multi_class='multinomial')),
                     ('rf', sklearn.ensemble.RandomForestClassifier(n_estimators=50)),
                     ('gnb',sklearn.naive_bayes.GaussianNB())
                 ],'voting':'hard'},
-                'AdaBoostClassifier':{'algorithm':'SAMME'}}
+                'AdaBoostClassifier':{'algorithm':'SAMME'},
+                'LinearSVC':{'dual':'auto'}}
     def get_arguments(self):
         """Return used model arguments.
 
