@@ -186,3 +186,18 @@ class FastPredict:
             Classifier name to remove. 
         """
         self.pipelines.pop(classifier_name)
+    def get_model(self, model_name: str) -> sklearn.pipeline.Pipeline:
+        """Return desired model.
+
+        Parameters
+        ----------
+        model_name : str
+            Desired model name
+
+        Returns
+        -------
+        sklearn.pipeline.Pipeline
+            Sklearn pipeline that belongs to desired model.
+        """
+        assert model_name in self.pipelines.keys(), 'This model is not existed'
+        return self.pipelines.get(model_name)
