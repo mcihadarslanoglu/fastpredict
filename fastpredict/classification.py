@@ -194,6 +194,24 @@ class FastPredict:
                  arguments: dict = {},
                  n_core: int = 1,
                  warning_level: str = 'default') -> None:
+        """Initialize FastPredict class.
+
+        Parameters
+        ----------
+        verbose : bool, optional
+            Indicates whether details will be display, by default False
+        preprocessing : dict, optional
+            Preprocessing steps for classification algorithms, by default {}
+        arguments : dict, optional
+            Arguments for Classification algorithms, by default {}
+        n_core : int, optional
+            Indicates how many core will be used, by default 1
+        warning_level : str, optional
+            Indidactes which warnings will be shown , by default 'default'
+            possible warning levels are default, error, ignore, always, module, and once.
+            You can access to details of warning levels using below link:
+            https://docs.python.org/3/library/warnings.html#the-warnings-filter 
+        """
         # https://stackoverflow.com/questions/41844311/list-of-all-classification-algorithms
         self.n_core = n_core
         self.warning_level = warning_level
