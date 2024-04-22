@@ -383,3 +383,13 @@ class FastPredict:
         """
         assert model_name in self.pipelines.keys(), 'This model is not existed'
         return self.pipelines.get(model_name)
+    
+    def list_models(self):
+        """List available models to make process.
+
+        Returns
+        -------
+        list
+            Avaiable models to make process. 
+        """
+        return list(self.pipelines.keys())
