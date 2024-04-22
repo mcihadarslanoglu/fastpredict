@@ -1,10 +1,12 @@
 """This module includes fastpredict processes
 """
+from logging import warn
 import multiprocessing
 import itertools
 import math
 import collections.abc
 import numpy
+import warnings
 import sklearn.pipeline
 import sklearn.base
 import sklearn.preprocessing
@@ -190,15 +192,20 @@ class FastPredict:
                  verbose: bool = False,
                  preprocessing: dict = {},
                  arguments: dict = {},
-                 n_core: int = 1) -> None:
+                 n_core: int = 1,
+                 warning_level: str = 'default') -> None:
         # https://stackoverflow.com/questions/41844311/list-of-all-classification-algorithms
         self.n_core = n_core
+        self.warning_level = warning_level
         self.settings = Settings()
         self.pipelines = {name: sklearn.pipeline.Pipeline(
             steps=list(step for step in self.settings.preprocessing.get(name, [('empty', EmptyTransform())]))
             + [('classifier', classifier(**self.settings.arguments.get(name, {})))])
                             for name, classifier in sklearn.utils.all_estimators()
                             if issubclass(classifier, sklearn.base.ClassifierMixin)}
+        
+        warnings.filterwarnings(self.warning_level)
+
 
     def fit(self,
             x_train:numpy.ndarray,
