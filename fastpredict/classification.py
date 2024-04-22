@@ -1,12 +1,13 @@
 """This module includes fastpredict processes
 """
-from logging import warn
 import multiprocessing
 import itertools
 import math
 import collections.abc
-import numpy
+import typing
 import warnings
+import numpy
+import tqdm
 import sklearn.pipeline
 import sklearn.base
 import sklearn.preprocessing
@@ -193,7 +194,8 @@ class FastPredict:
                  preprocessing: dict = {},
                  arguments: dict = {},
                  n_core: int = 1,
-                 warning_level: str = 'default') -> None:
+                 warning_level: typing.Literal['default', 'error', 'ignore',
+                                               'always', 'module', 'once'] = 'default') -> None:
         """Initialize FastPredict class.
 
         Parameters
@@ -221,9 +223,7 @@ class FastPredict:
             + [('classifier', classifier(**self.settings.arguments.get(name, {})))])
                             for name, classifier in sklearn.utils.all_estimators()
                             if issubclass(classifier, sklearn.base.ClassifierMixin)}
-        
         warnings.filterwarnings(self.warning_level)
-
 
     def fit(self,
             x_train:numpy.ndarray,
@@ -237,20 +237,30 @@ class FastPredict:
         y_train : numpy.ndarray
             Train data labels.
         """
+
+
         processes = []
-        for pipelines in to_batch(self.pipelines,
-                                  len(self.pipelines)//self.n_core):
+        return_pipelines =  multiprocessing.Manager().dict()
+        for process_index, pipelines in enumerate(to_batch(self.pipelines,
+                                  len(self.pipelines)//self.n_core)):
+
             process = multiprocessing.Process(target = self._fit,
-                                              args = (pipelines,x_train,y_train))
+                                              args = (pipelines,
+                                                      x_train,y_train, return_pipelines, process_index))
             process.start()
+
             processes.append(process)
         for process in processes:
             process.join()
 
+        self.pipelines = return_pipelines.copy()
+
     def _fit(self,
             pipelines: dict,
             x_train: numpy.ndarray,
-            y_train:numpy.ndarray) -> None:
+            y_train: numpy.ndarray,
+            return_pipelines,
+            process_index: int = 0) -> None:
         """Fit given pipelines with train data.
 
         Parameters
@@ -261,10 +271,20 @@ class FastPredict:
             Train data.
         y_train : numpy.ndarray
             Train data labels.
+        return_pipelines: dict
+            Store fitted models.  
+        process_index: int
+            Represent index of core that is running.
         """
-        for pipeline_name, pipeline in pipelines:
-            pipeline.fit(x_train,y_train)
+        len_pipelines = len(pipelines)
+        tqdm_pipelines = tqdm.tqdm(pipelines, total = len_pipelines, position= process_index)
+        for pipeline_name, pipeline in tqdm_pipelines:
 
+            tqdm_pipelines.set_description(pipeline_name)
+            pipeline.fit(x_train,y_train)
+            return_pipelines[pipeline_name] = pipeline
+
+        tqdm_pipelines.close()
     def order_pipelines(self):
         """Order pipelines for efficient multiprocessing.
         """
@@ -278,7 +298,7 @@ class FastPredict:
         for index, tmp in enumerate(complexity_order):
             tmp_pipelines[index].extend(tmp)
         tmp_pipelines = [x for xs in tmp_pipelines
-                         for x in xs ]
+                         for x in xs ][::-1]
         self.pipelines = {name:self.pipelines[name]
                           for (name, order) in tmp_pipelines}
 
