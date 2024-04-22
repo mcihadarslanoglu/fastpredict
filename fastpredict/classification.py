@@ -1,5 +1,10 @@
 """This module includes fastpredict processes
 """
+import multiprocessing
+import itertools
+import math
+import collections.abc
+import numpy
 import sklearn.pipeline
 import sklearn.base
 import sklearn.preprocessing
@@ -11,14 +16,13 @@ import sklearn.naive_bayes
 import sklearn.utils
 import sklearn.datasets
 import sklearn.metrics
-import numpy
-
 
 class Settings:
     """This is setting class for classification algorithms.
     """
 
     def __init__(self):
+
         self.preprocessing = {'CategoricalNB':[('minmaxscaler',sklearn.preprocessing.MinMaxScaler())],
                         'ClassifierChain':[('',sklearn.datasets.make_multilabel_classification)],
                         'ComplementNB':[('minmaxscaler',sklearn.preprocessing.MinMaxScaler())],
@@ -40,6 +44,52 @@ class Settings:
                 ],'voting':'hard'},
                 'AdaBoostClassifier':{'algorithm':'SAMME'},
                 'LinearSVC':{'dual':'auto'}}
+        """
+        Some classification algorithms takes more times than others. 
+        If we fit these kind of models in same core for multiprocessing,
+        all training time is not decreased effectively. 
+        We give a complexity order for each model that the less order 
+        the more fitting time. We distribute these models into different cores. 
+        """
+        self.complexity_order = {'GaussianProcessClassifier': 1,
+         'GradientBoostingClassifier': 2, 
+         'LabelSpreading': 3, 
+         'MLPClassifier': 4, 
+         'LabelPropagation': 5, 
+         'NuSVC': 6, 
+         'RandomForestClassifier': 7, 
+         'OutputCodeClassifier': 8, 
+         'ExtraTreesClassifier': 9, 
+         'StackingClassifier': 10, 
+         'HistGradientBoostingClassifier': 11, 
+         'VotingClassifier': 12, 
+         'LogisticRegressionCV': 13, 
+         'OneVsRestClassifier': 14, 
+         'SVC': 15, 
+         'AdaBoostClassifier': 16, 
+         'BaggingClassifier': 17, 
+         'CalibratedClassifierCV': 18, 
+         'DecisionTreeClassifier': 19, 
+         'SGDClassifier': 20, 
+         'LogisticRegression': 21, 
+         'LinearSVC': 22, 
+         'QuadraticDiscriminantAnalysis': 23, 
+         'OneVsOneClassifier': 24, 
+         'RidgeClassifierCV': 25, 
+         'PassiveAggressiveClassifier': 26, 
+         'CategoricalNB': 27, 
+         'RidgeClassifier': 28, 
+         'LinearDiscriminantAnalysis': 29, 
+         'Perceptron': 30, 
+         'ExtraTreeClassifier': 31, 
+         'GaussianNB': 32, 
+         'ComplementNB': 33, 
+         'BernoulliNB': 34, 
+         'MultinomialNB': 35, 
+         'NearestCentroid': 36, 
+         'RadiusNeighborsClassifier': 37, 
+         'KNeighborsClassifier': 38, 
+         'DummyClassifier': 39}
     def get_arguments(self):
         """Return used model arguments.
 
@@ -58,6 +108,15 @@ class Settings:
             All preprocessing steps that belongs to used models.
         """
         return self.preprocessing
+    def get_complexity_orders(self):
+        """Return complexity order of models.
+
+        Returns
+        -------
+        dict
+            Complexity order of models.
+        """
+        return self.complexity_order
 class EmptyTransform(sklearn.base.TransformerMixin):
     """This class is used to pass data to next step without any transform in sklearn pipeline
     """
@@ -101,20 +160,46 @@ class EmptyTransform(sklearn.base.TransformerMixin):
     def __repr__(self) -> str:
         return 'EmptyTransform()'
 
+
+def to_batch(pipelines: dict, n_core: int) -> collections.abc.Generator[tuple, None, None]:
+    """Split all pipelines to batches. 
+
+    Parameters
+    ----------
+    pipelines : dict
+        Target pipelines to split._
+    n_core : int
+        Total batch or used core size. 
+
+    Yields
+    ------
+    collections.abc.Generator[tuple]
+        One batch of pipelines
+    """
+    iter_pipelines = iter(pipelines.items())
+    while True:
+        p = tuple(itertools.islice(iter_pipelines, n_core))
+        if not p:
+            break
+        yield p
+
 class FastPredict:
     """FastPredict class includes all possible classification algorithms to train, predict, and evaluate. 
     """
     def __init__(self,
                  verbose: bool = False,
                  preprocessing: dict = {},
-                 arguments: dict = {}) -> None:
+                 arguments: dict = {},
+                 n_core: int = 1) -> None:
         # https://stackoverflow.com/questions/41844311/list-of-all-classification-algorithms
+        self.n_core = n_core
         self.settings = Settings()
         self.pipelines = {name: sklearn.pipeline.Pipeline(
             steps=list(step for step in self.settings.preprocessing.get(name, [('empty', EmptyTransform())]))
             + [('classifier', classifier(**self.settings.arguments.get(name, {})))])
                             for name, classifier in sklearn.utils.all_estimators()
                             if issubclass(classifier, sklearn.base.ClassifierMixin)}
+
     def fit(self,
             x_train:numpy.ndarray,
             y_train:numpy.ndarray) -> None:
@@ -127,9 +212,50 @@ class FastPredict:
         y_train : numpy.ndarray
             Train data labels.
         """
+        processes = []
+        for pipelines in to_batch(self.pipelines,
+                                  len(self.pipelines)//self.n_core):
+            process = multiprocessing.Process(target = self._fit,
+                                              args = (pipelines,x_train,y_train))
+            process.start()
+            processes.append(process)
+        for process in processes:
+            process.join()
 
-        for pipeline_name, pipeline in self.pipelines.items():
-            pipeline.fit(x_train, y_train)
+    def _fit(self,
+            pipelines: dict,
+            x_train: numpy.ndarray,
+            y_train:numpy.ndarray) -> None:
+        """Fit given pipelines with train data.
+
+        Parameters
+        ----------
+        pipelines : dict
+            Desired pipelines to fit with train data._
+        x_train : numpy.ndarray
+            Train data.
+        y_train : numpy.ndarray
+            Train data labels.
+        """
+        for pipeline_name, pipeline in pipelines:
+            pipeline.fit(x_train,y_train)
+
+    def order_pipelines(self):
+        """Order pipelines for efficient multiprocessing.
+        """
+        complexity_order = self.settings.complexity_order
+        complexity_order = sorted(complexity_order.items(),
+                                  key = lambda item: item[1])
+        tmp_pipelines = [[complexity_order.pop(0)]
+                          for _ in range(math.ceil(len(complexity_order)/self.n_core))]
+        complexity_order = to_batch(dict(complexity_order),
+                                    math.ceil(len(complexity_order)/self.n_core))
+        for index, tmp in enumerate(complexity_order):
+            tmp_pipelines[index].extend(tmp)
+        tmp_pipelines = [x for xs in tmp_pipelines
+                         for x in xs ]
+        self.pipelines = {name:self.pipelines[name]
+                          for (name, order) in tmp_pipelines}
 
     def predict(self,
                 x_test:numpy.ndarray) -> dict:
@@ -151,6 +277,7 @@ class FastPredict:
             all_predictions[pipeline_name] = predictions
 
         return all_predictions
+
     def evaluate(self,
                  x_test:numpy.ndarray,
                  y_test:numpy.ndarray,
@@ -176,6 +303,7 @@ class FastPredict:
           for model_name, y_true, y_pred in zip(all_predictions.keys(),
                                             y_test[None,:].repeat(len(all_predictions.keys()),0),
                                             all_predictions.values())}
+
     def remove_classifier(self,
                           classifier_name: str) -> None:
         """Remove given model from FastPredict class.
@@ -186,6 +314,7 @@ class FastPredict:
             Classifier name to remove. 
         """
         self.pipelines.pop(classifier_name)
+
     def get_model(self, model_name: str) -> sklearn.pipeline.Pipeline:
         """Return desired model.
 
