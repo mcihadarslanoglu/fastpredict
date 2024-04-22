@@ -25,12 +25,21 @@ class Settings:
     """
 
     def __init__(self):
-
+        """
+        Some classification algorithms need one or more preprocessing steps
+        like MultinomialNB. MultinomialNB does not support negative training data.
+        We define preprocessing steps for each classification algorithms to handle 
+        these kind of problems. You can also add specific preprocessing steps for each
+        classification algorithm. 
+        """
         self.preprocessing = {'CategoricalNB':[('minmaxscaler',sklearn.preprocessing.MinMaxScaler())],
                         'ClassifierChain':[('',sklearn.datasets.make_multilabel_classification)],
                         'ComplementNB':[('minmaxscaler',sklearn.preprocessing.MinMaxScaler())],
                         'MultinomialNB':[('minmaxscaler',sklearn.preprocessing.MinMaxScaler())]}
-
+        """
+        arguments variable is created to pass specific arguments to model
+        that is desired to fit. 
+        """
         self.arguments = {'ClassifierChain': {'base_estimator':sklearn.linear_model.LogisticRegression(solver = 'lbfgs'),},
                     'MultiOutputClassifier': {'estimator':sklearn.linear_model.LogisticRegression(solver = 'lbfgs'),},
                     'OneVsOneClassifier': {'estimator':sklearn.svm.LinearSVC(dual='auto'),},
@@ -237,7 +246,6 @@ class FastPredict:
         y_train : numpy.ndarray
             Train data labels.
         """
-
 
         processes = []
         return_pipelines =  multiprocessing.Manager().dict()
