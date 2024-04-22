@@ -226,14 +226,10 @@ class FastPredict:
         # https://stackoverflow.com/questions/41844311/list-of-all-classification-algorithms
         self.n_core = n_core
         self.warning_level = warning_level
+        self.pipelines: typing.Dict[str, sklearn.pipeline.Pipeline] = {}
         self.settings = Settings()
-        self.pipelines = {name: sklearn.pipeline.Pipeline(
-            steps=list(step for step in self.settings.preprocessing.get(name, [('empty', EmptyTransform())]))
-            + [('classifier', classifier(**self.settings.arguments.get(name, {})))])
-                            for name, classifier in sklearn.utils.all_estimators()
-                            if issubclass(classifier, sklearn.base.ClassifierMixin)}
         warnings.filterwarnings(self.warning_level)
-
+        self.build_pipelines()
     def fit(self,
             x_train:numpy.ndarray,
             y_train:numpy.ndarray) -> None:
@@ -383,7 +379,7 @@ class FastPredict:
         """
         assert model_name in self.pipelines.keys(), 'This model is not existed'
         return self.pipelines.get(model_name)
-    
+
     def list_models(self):
         """List available models to make process.
 
@@ -393,3 +389,14 @@ class FastPredict:
             Avaiable models to make process. 
         """
         return list(self.pipelines.keys())
+    def build_pipelines(self):
+        """Build the all pipelines.
+        Dont forget run this function after you make 
+        some changes on Settings class. 
+        """
+
+        self.pipelines = {name: sklearn.pipeline.Pipeline(
+        steps=list(step for step in self.settings.preprocessing.get(name, [('empty', EmptyTransform())]))
+        + [('classifier', classifier(**self.settings.arguments.get(name, {})))])
+                        for name, classifier in sklearn.utils.all_estimators()
+                        if issubclass(classifier, sklearn.base.ClassifierMixin)}
