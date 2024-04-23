@@ -28,9 +28,9 @@ class Settings:
         """
         Some classification algorithms need one or more preprocessing steps
         like MultinomialNB. MultinomialNB does not support negative training data.
-        We define preprocessing steps for each classification algorithms to handle 
+        We define preprocessing steps for each classification algorithms to handle
         these kind of problems. You can also add specific preprocessing steps for each
-        classification algorithm. 
+        classification algorithm.
         """
         self.preprocessing = {'CategoricalNB':[('minmaxscaler',sklearn.preprocessing.MinMaxScaler())],
                         'ClassifierChain':[('',sklearn.datasets.make_multilabel_classification)],
@@ -38,7 +38,7 @@ class Settings:
                         'MultinomialNB':[('minmaxscaler',sklearn.preprocessing.MinMaxScaler())]}
         """
         arguments variable is created to pass specific arguments to model
-        that is desired to fit. 
+        that is desired to fit.
         """
         self.arguments = {'ClassifierChain': {'base_estimator':sklearn.linear_model.LogisticRegression(solver = 'lbfgs'),},
                     'MultiOutputClassifier': {'estimator':sklearn.linear_model.LogisticRegression(solver = 'lbfgs'),},
@@ -57,50 +57,50 @@ class Settings:
                 'AdaBoostClassifier':{'algorithm':'SAMME'},
                 'LinearSVC':{'dual':'auto'}}
         """
-        Some classification algorithms takes more times than others. 
+        Some classification algorithms takes more times than others.
         If we fit these kind of models in same core for multiprocessing,
-        all training time is not decreased effectively. 
-        We give a complexity order for each model that the less order 
-        the more fitting time. We distribute these models into different cores. 
+        all training time is not decreased effectively.
+        We give a complexity order for each model that the less order
+        the more fitting time. We distribute these models into different cores.
         """
         self.complexity_order = {'GaussianProcessClassifier': 1,
-         'GradientBoostingClassifier': 2, 
-         'LabelSpreading': 3, 
-         'MLPClassifier': 4, 
-         'LabelPropagation': 5, 
-         'NuSVC': 6, 
-         'RandomForestClassifier': 7, 
-         'OutputCodeClassifier': 8, 
-         'ExtraTreesClassifier': 9, 
-         'StackingClassifier': 10, 
-         'HistGradientBoostingClassifier': 11, 
-         'VotingClassifier': 12, 
-         'LogisticRegressionCV': 13, 
-         'OneVsRestClassifier': 14, 
-         'SVC': 15, 
-         'AdaBoostClassifier': 16, 
-         'BaggingClassifier': 17, 
-         'CalibratedClassifierCV': 18, 
-         'DecisionTreeClassifier': 19, 
-         'SGDClassifier': 20, 
-         'LogisticRegression': 21, 
-         'LinearSVC': 22, 
-         'QuadraticDiscriminantAnalysis': 23, 
-         'OneVsOneClassifier': 24, 
-         'RidgeClassifierCV': 25, 
-         'PassiveAggressiveClassifier': 26, 
-         'CategoricalNB': 27, 
-         'RidgeClassifier': 28, 
-         'LinearDiscriminantAnalysis': 29, 
-         'Perceptron': 30, 
-         'ExtraTreeClassifier': 31, 
-         'GaussianNB': 32, 
-         'ComplementNB': 33, 
-         'BernoulliNB': 34, 
-         'MultinomialNB': 35, 
-         'NearestCentroid': 36, 
-         'RadiusNeighborsClassifier': 37, 
-         'KNeighborsClassifier': 38, 
+         'GradientBoostingClassifier': 2,
+         'LabelSpreading': 3,
+         'MLPClassifier': 4,
+         'LabelPropagation': 5,
+         'NuSVC': 6,
+         'RandomForestClassifier': 7,
+         'OutputCodeClassifier': 8,
+         'ExtraTreesClassifier': 9,
+         'StackingClassifier': 10,
+         'HistGradientBoostingClassifier': 11,
+         'VotingClassifier': 12,
+         'LogisticRegressionCV': 13,
+         'OneVsRestClassifier': 14,
+         'SVC': 15,
+         'AdaBoostClassifier': 16,
+         'BaggingClassifier': 17,
+         'CalibratedClassifierCV': 18,
+         'DecisionTreeClassifier': 19,
+         'SGDClassifier': 20,
+         'LogisticRegression': 21,
+         'LinearSVC': 22,
+         'QuadraticDiscriminantAnalysis': 23,
+         'OneVsOneClassifier': 24,
+         'RidgeClassifierCV': 25,
+         'PassiveAggressiveClassifier': 26,
+         'CategoricalNB': 27,
+         'RidgeClassifier': 28,
+         'LinearDiscriminantAnalysis': 29,
+         'Perceptron': 30,
+         'ExtraTreeClassifier': 31,
+         'GaussianNB': 32,
+         'ComplementNB': 33,
+         'BernoulliNB': 34,
+         'MultinomialNB': 35,
+         'NearestCentroid': 36,
+         'RadiusNeighborsClassifier': 37,
+         'KNeighborsClassifier': 38,
          'DummyClassifier': 39}
     def get_arguments(self):
         """Return used model arguments.
@@ -174,14 +174,14 @@ class EmptyTransform(sklearn.base.TransformerMixin):
 
 
 def to_batch(pipelines: dict, n_core: int) -> collections.abc.Generator[tuple, None, None]:
-    """Split all pipelines to batches. 
+    """Split all pipelines to batches.
 
     Parameters
     ----------
     pipelines : dict
         Target pipelines to split._
     n_core : int
-        Total batch or used core size. 
+        Total batch or used core size.
 
     Yields
     ------
@@ -196,7 +196,7 @@ def to_batch(pipelines: dict, n_core: int) -> collections.abc.Generator[tuple, N
         yield p
 
 class FastPredict:
-    """FastPredict class includes all possible classification algorithms to train, predict, and evaluate. 
+    """FastPredict class includes all possible classification algorithms to train, predict, and evaluate.
     """
     def __init__(self,
                  verbose: bool = False,
@@ -221,7 +221,7 @@ class FastPredict:
             Indidactes which warnings will be shown , by default 'default'
             possible warning levels are default, error, ignore, always, module, and once.
             You can access to details of warning levels using below link:
-            https://docs.python.org/3/library/warnings.html#the-warnings-filter 
+            https://docs.python.org/3/library/warnings.html#the-warnings-filter
         """
         # https://stackoverflow.com/questions/41844311/list-of-all-classification-algorithms
         self.n_core = n_core
@@ -276,7 +276,7 @@ class FastPredict:
         y_train : numpy.ndarray
             Train data labels.
         return_pipelines: dict
-            Store fitted models.  
+            Store fitted models.
         process_index: int
             Represent index of core that is running.
         """
@@ -318,7 +318,7 @@ class FastPredict:
         Returns
         -------
         dict
-            Obtained predictions of test dataset. 
+            Obtained predictions of test dataset.
         """
         all_predictions = {}
         for pipeline_name, pipeline in self.pipelines.items():
@@ -330,7 +330,9 @@ class FastPredict:
     def evaluate(self,
                  x_test:numpy.ndarray,
                  y_test:numpy.ndarray,
-                 metrics: list = []) -> dict:
+                 metrics: list = [sklearn.metrics.accuracy_score, sklearn.metrics.f1_score,
+                                  sklearn.metrics.precision_score, sklearn.metrics.recall_score],
+                 metric_parameters = [{},{'average':'macro'},{'average':'macro'},{'average':'macro'}]) -> dict:
         """Evaluate test dataset performance with given or default metrics.
 
         Parameters
@@ -340,15 +342,16 @@ class FastPredict:
         y_test : numpy.ndarray
             Test dataset labels.
         metrics : list, optional
-            Performance metrics to evaluate given test dataset, by default []
-
+            Performance metrics to evaluate given test dataset, by default [].
+        metric_parameters : list, optional
+            Parameters for given metrics.
         Returns
         -------
         dict
-            Performance metrics of given test dataset for all trained models. 
+            Performance metrics of given test dataset for all trained models.
         """
         all_predictions = self.predict(x_test)
-        return {model_name: {metric.__name__: metric(y_true,y_pred) for metric in metrics}
+        return {model_name: {metric.__name__: metric(y_true,y_pred, **metric_parameter) for metric, metric_parameter in zip(metrics, metric_parameters)}
           for model_name, y_true, y_pred in zip(all_predictions.keys(),
                                             y_test[None,:].repeat(len(all_predictions.keys()),0),
                                             all_predictions.values())}
@@ -360,7 +363,7 @@ class FastPredict:
         Parameters
         ----------
         classifier_name : str
-            Classifier name to remove. 
+            Classifier name to remove.
         """
         self.pipelines.pop(classifier_name)
 
@@ -386,13 +389,13 @@ class FastPredict:
         Returns
         -------
         list
-            Avaiable models to make process. 
+            Avaiable models to make process.
         """
         return list(self.pipelines.keys())
     def build_pipelines(self):
         """Build the all pipelines.
-        Dont forget run this function after you make 
-        some changes on Settings class. 
+        Dont forget run this function after you make
+        some changes on Settings class.
         """
 
         self.pipelines = {name: sklearn.pipeline.Pipeline(
