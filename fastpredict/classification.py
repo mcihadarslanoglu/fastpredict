@@ -200,8 +200,6 @@ class FastPredict:
     """
     def __init__(self,
                  verbose: bool = False,
-                 preprocessing: dict = {},
-                 arguments: dict = {},
                  n_core: int = 1,
                  warning_level: typing.Literal['default', 'error', 'ignore',
                                                'always', 'module', 'once'] = 'default') -> None:
@@ -211,10 +209,6 @@ class FastPredict:
         ----------
         verbose : bool, optional
             Indicates whether details will be display, by default False
-        preprocessing : dict, optional
-            Preprocessing steps for classification algorithms, by default {}
-        arguments : dict, optional
-            Arguments for Classification algorithms, by default {}
         n_core : int, optional
             Indicates how many core will be used, by default 1
         warning_level : str, optional
@@ -433,4 +427,17 @@ class FastPredict:
 
         old_preprocessing= self.settings.preprocessing.get(model_name, [])
         self.settings.preprocessing[model_name] = [(preprocessing_name, preprocessing)] + old_preprocessing
+        return None
+
+    def add_arguments(self, model_name, arguments):
+        if model_name == 'all':
+            for _model_name in self.classification_models.keys():
+                _arguments = self.settings.arguments.get(_model_name, {})
+                _arguments.update(arguments)
+                self.settings.arguments[_model_name] = _arguments
+            return None
+
+        _arguments= self.settings.arguments.get(model_name, {})
+        _arguments.update(arguments)
+        self.settings.arguments[model_name] = _arguments
         return None
