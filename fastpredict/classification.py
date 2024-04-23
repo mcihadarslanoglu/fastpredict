@@ -372,7 +372,6 @@ class FastPredict:
             Classifier name to remove.
         """
         self.classification_models.pop(classifier_name)
-        self.pipelines.pop(classifier_name)
 
     def get_model(self, model_name: str) -> sklearn.pipeline.Pipeline:
         """Return desired model.
@@ -405,9 +404,33 @@ class FastPredict:
         some changes on Settings class.
         """
 
-
-
         self.pipelines = {name: sklearn.pipeline.Pipeline(
         steps=list(step for step in self.settings.preprocessing.get(name, [('empty', EmptyTransform())]))
         + [('classifier', classifier(**self.settings.arguments.get(name, {})))])
                         for name, classifier in self.classification_models.items()}
+
+    def add_preprocessing(self,
+                          model_name: str,
+                          preprocessing_name: str,
+                          preprocessing: sklearn.base.TransformerMixin) -> None:
+        """Add preprocessing step for given model.
+        If model_name is 'all', given preprocessing step is added to all models.
+
+        Parameters
+        ----------
+        model_name : str
+            desired model name to add preprocessing
+        preprocessing_name : str
+            unique preprocessing name
+        preprocessing : sklearn.base.TransformerMixin
+            desired preprocessing step.
+        """
+        if model_name == 'all':
+            for _model_name in self.classification_models.keys():
+                old_preprocessing = self.settings.preprocessing.get(_model_name, [])
+                self.settings.preprocessing[_model_name] = [(preprocessing_name, preprocessing)] + old_preprocessing
+            return None
+
+        old_preprocessing= self.settings.preprocessing.get(model_name, [])
+        self.settings.preprocessing[model_name] = [(preprocessing_name, preprocessing)] + old_preprocessing
+        return None
