@@ -199,7 +199,6 @@ class FastPredict:
     """FastPredict class includes all possible classification algorithms to train, predict, and evaluate.
     """
     def __init__(self,
-                 verbose: bool = False,
                  n_core: int = 1,
                  warning_level: typing.Literal['default', 'error', 'ignore',
                                                'always', 'module', 'once'] = 'default') -> None:
@@ -429,7 +428,19 @@ class FastPredict:
         self.settings.preprocessing[model_name] = [(preprocessing_name, preprocessing)] + old_preprocessing
         return None
 
-    def add_arguments(self, model_name, arguments):
+    def add_arguments(self,
+                      model_name: str,
+                      arguments: dict) ->None:
+        """Add arguments for given model. These arguments are used when model initialized
+        If model_nname is 'all', given arguments are added to all models.
+
+        Parameters
+        ----------
+        model_name : str
+            Desired model name to add arguments.
+        arguments : dict
+            Desired arguments to add.
+        """
         if model_name == 'all':
             for _model_name in self.classification_models.keys():
                 _arguments = self.settings.arguments.get(_model_name, {})
