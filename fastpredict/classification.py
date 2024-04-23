@@ -230,6 +230,8 @@ class FastPredict:
         self.settings = Settings()
         warnings.filterwarnings(self.warning_level)
         self.build_pipelines()
+        self.remove_classifier('ClassifierChain')
+        self.remove_classifier('MultiOutputClassifier')
     def fit(self,
             x_train:numpy.ndarray,
             y_train:numpy.ndarray) -> None:
