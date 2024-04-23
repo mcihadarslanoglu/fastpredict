@@ -353,7 +353,8 @@ class FastPredict:
             Performance metrics of given test dataset for all trained models.
         """
         all_predictions = self.predict(x_test)
-        return {model_name: {metric.__name__: metric(y_true,y_pred, **metric_parameter) for metric, metric_parameter in zip(metrics, metric_parameters)}
+        return {model_name: {metric.__name__: metric(y_true,y_pred, **metric_parameter)
+                             for metric, metric_parameter in zip(metrics, metric_parameters)}
           for model_name, y_true, y_pred in zip(all_predictions.keys(),
                                             y_test[None,:].repeat(len(all_predictions.keys()),0),
                                             all_predictions.values())}
