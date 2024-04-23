@@ -228,6 +228,9 @@ class FastPredict:
         self.warning_level = warning_level
         self.pipelines: typing.Dict[str, sklearn.pipeline.Pipeline] = {}
         self.settings = Settings()
+        self.classification_models = {name: classifier for name, classifier in sklearn.utils.all_estimators()
+                        if issubclass(classifier, sklearn.base.ClassifierMixin)}
+
         warnings.filterwarnings(self.warning_level)
         self.build_pipelines()
         self.remove_classifier('ClassifierChain')
@@ -368,6 +371,7 @@ class FastPredict:
         classifier_name : str
             Classifier name to remove.
         """
+        self.classification_models.pop(classifier_name)
         self.pipelines.pop(classifier_name)
 
     def get_model(self, model_name: str) -> sklearn.pipeline.Pipeline:
@@ -401,8 +405,9 @@ class FastPredict:
         some changes on Settings class.
         """
 
+
+
         self.pipelines = {name: sklearn.pipeline.Pipeline(
         steps=list(step for step in self.settings.preprocessing.get(name, [('empty', EmptyTransform())]))
         + [('classifier', classifier(**self.settings.arguments.get(name, {})))])
-                        for name, classifier in sklearn.utils.all_estimators()
-                        if issubclass(classifier, sklearn.base.ClassifierMixin)}
+                        for name, classifier in self.classification_models.items()}
