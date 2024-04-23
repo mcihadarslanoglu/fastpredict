@@ -200,6 +200,7 @@ class FastPredict:
     """
     def __init__(self,
                  n_core: int = 1,
+                 verbose: bool = False,
                  warning_level: typing.Literal['default', 'error', 'ignore',
                                                'always', 'module', 'once'] = 'default') -> None:
         """Initialize FastPredict class.
@@ -218,6 +219,7 @@ class FastPredict:
         """
         # https://stackoverflow.com/questions/41844311/list-of-all-classification-algorithms
         self.n_core = n_core
+        self.verbose = verbose
         self.warning_level = warning_level
         self.pipelines: typing.Dict[str, sklearn.pipeline.Pipeline] = {}
         self.settings = Settings()
@@ -279,14 +281,19 @@ class FastPredict:
             Represent index of core that is running.
         """
         len_pipelines = len(pipelines)
-        tqdm_pipelines = tqdm.tqdm(pipelines, total = len_pipelines, position= process_index)
-        for pipeline_name, pipeline in tqdm_pipelines:
+        if self.verbose:
+            _pipelines = tqdm.tqdm(pipelines, total = len_pipelines, position= process_index)
+        else:
+            _pipelines = pipelines
+        for pipeline_name, pipeline in _pipelines:
 
-            tqdm_pipelines.set_description(pipeline_name)
+            if self.verbose:
+                _pipelines.set_description(pipeline_name)
+
             pipeline.fit(x_train,y_train)
             return_pipelines[pipeline_name] = pipeline
-
-        tqdm_pipelines.close()
+        if self.verbose:
+            _pipelines.close()
     def order_pipelines(self):
         """Order pipelines for efficient multiprocessing.
         """
